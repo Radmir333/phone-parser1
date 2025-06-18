@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
 import io
+from googlesearch_py import googlesearch
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
