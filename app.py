@@ -11,7 +11,24 @@ from dotenv import load_dotenv
 import os
 import io
 from googlesearch_py import googlesearch
+from bs4 import BeautifulSoup
+import requests
 
+def google_search(query, num_results=10):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url = f"https://www.google.com/search?q={query}&num={num_results}"
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    results = []
+    for g in soup.find_all('div', class_='g'):
+        link = g.find('a', href=True)
+        if link and 'http' in link['href']:
+            results.append(link['href'])
+    return results
+    
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 
