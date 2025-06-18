@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Парсер телефонов</title>
+    <style>
+        :root {
+            --bg-color: #1E1E1E;
+            --text-color: #FFFFFF;
+            --accent-color: #2D2D2D;
+            --button-color: #4A4A4A;
+            --button-hover: #3A3A3A;
+            --green-accent: #00A884;
+            --blue-accent: #1E90FF;
+            --progress-color: #00A884;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--accent-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 15px 0 10px;
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 95%;
+            padding: 12px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid #444;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .checkbox-group {
+            margin: 20px 0;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .checkbox-input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--green-accent);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--button-color);
+            color: var(--text-color);
+        }
+
+        .btn-blue {
+            background-color: var(--blue-accent);
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .results-title {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        .results-bullet {
+            color: var(--blue-accent);
+            font-size: 24px;
+            margin-right: 5px;
+        }
+
+        .result-item {
+            background-color: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--blue-accent);
+        }
+
+        .phone-number {
+            color: var(--green-accent);
+            font-weight: bold;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #444;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--progress-color);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .site-url {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Парсер телефонов</h1>
+        
+        <div class="form-group">
+            <label for="query">Поисковой запрос</label>
+            <input type="text" id="query" placeholder="Например: автосалоны Москвы">
+        </div>
+        
+        <div class="form-group">
+            <label for="num_sites">Количество сайтов обработать</label>
+            <input type="number" id="num_sites" value="10" min="1" max="50">
+        </div>
+        
+        <div class="checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" class="checkbox-input" id="telegram_check">
+                Искать Telegram аккаунты
+            </label>
+        </div>
+        
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0%</div>
+            <div class="progress-details">
+                <span id="processed">Обработано: 0</span>
+                <span id="remaining">Осталось: 10</span>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn btn-primary" id="parse-btn">Запустить парсинг</button>
+            <button class="btn btn-secondary" id="stop-btn" disabled>Стоп</button>
+            <button class="btn btn-blue" id="download-btn" disabled>Скачать результаты</button>
+        </div>
+        
+        <div class="results-section">
+            <div class="results-header">
+                <span class="results-bullet">●</span>
+                <h2 class="results-title">Результаты</h2>
+            </div>
+            
+            <div id="results-container">
+                <!-- Результаты будут добавляться сюда -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const parseBtn = document.getElementById('parse-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const processedText = document.getElementById('processed');
+            const remainingText = document.getElementById('remaining');
+            const resultsContainer = document.getElementById('results-container');
+            const numSitesInput = document.getElementById('num_sites');
+            
+            let isParsing = false;
+            let currentProgress = 0;
+            let totalSites = 10;
+            let foundPhones = [];
+            let progressInterval;
+            
+            function startParsing() {
+                if (isParsing) return;
+                
+                isParsing = true;
+                parseBtn.disabled = true;
+                stopBtn.disabled = false;
+                downloadBtn.disabled = true;
+                progressContainer.style.display = 'block';
+                
+                totalSites = parseInt(numSitesInput.value) || 10;
+                currentProgress = 0;
+                foundPhones = [];
+                updateProgress(0);
+                
+                resultsContainer.innerHTML = '';
+                addResult('Начало парсинга...');
+                
+                // Имитация прогресса
+                progressInterval = setInterval(() => {
+                    if (!isParsing) {
+                        clearInterval(progressInterval);
+                        return;
+                    }
+                    
+                    if (currentProgress < 90) {
+                        currentProgress += 100 / totalSites;
+                        updateProgress(Math.min(currentProgress, 90));
+                        addResult(`Идет обработка... ${Math.round(currentProgress)}%`);
+                    }
+                }, 1000);
+                
+                // Отправка запроса
+                fetch('/parse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa('admin:112244')
+                    },
+                    body: JSON.stringify({
+                        query: document.getElementById('query').value,
+                        num_sites: totalSites,
+                        check_telegram: document.getElementById('telegram_check').checked
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(progressInterval);
+                    
+                    if (data.status === 'success') {
+                        // Отображаем результаты
+                        if (data.results.length === 0) {
+                            addResult('Телефоны не найдены на обработанных сайтах');
+                        } else {
+                            data.results.forEach(site => {
+                                const siteElement = document.createElement('div');
+                                siteElement.className = 'result-item';
+                                
+                                const domain = document.createElement('div');
+                                domain.textContent = `🔍 ${site.domain}`;
+                                siteElement.appendChild(domain);
+                                
+                                if (site.phones && site.phones.length > 0) {
+                                    const phonesTitle = document.createElement('div');
+                                    phonesTitle.textContent = 'Найденные телефоны:';
+                                    phonesTitle.style.margin = '10px 0 5px 0';
+                                    siteElement.appendChild(phonesTitle);
+                                    
+                                    const phonesList = document.createElement('div');
+                                    site.phones.forEach(phone => {
+                                        const phoneElement = document.createElement('div');
+                                        phoneElement.innerHTML = `📞 <span class="phone-number">${phone}</span>`;
+                                        phonesList.appendChild(phoneElement);
+                                        foundPhones.push(phone);
+                                    });
+                                    siteElement.appendChild(phonesList);
+                                }
+                                
+                                const urlElement = document.createElement('div');
+                                urlElement.className = 'site-url';
+                                urlElement.textContent = `Ссылка: ${site.url}`;
+                                siteElement.appendChild(urlElement);
+                                
+                                resultsContainer.appendChild(siteElement);
+                            });
+                        }
+                        
+                        // Выводим статистику
+                        const statsElement = document.createElement('div');
+                        statsElement.className = 'result-item';
+                        statsElement.innerHTML = `
+                            <div>✅ Парсинг завершен!</div>
+                            <div>Обработано сайтов: ${data.stats.processed}/${data.stats.total_sites}</div>
+                            <div>Найдено телефонов: <span class="phone-number">${data.stats.phones_found}</span></div>
+                            <div>Сайтов с телефонами: ${data.stats.sites_with_phones}</div>
+                        `;
+                        resultsContainer.appendChild(statsElement);
+                        
+                        updateProgress(100);
+                    } else {
+                        addResult(`Ошибка: ${data.message}`);
+                    }
+                    
+                    finishParsing();
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    addResult(`Ошибка: ${error.message}`);
+                    stopParsing();
+                });
+            }
+            
+            function stopParsing() {
+                if (!isParsing) return;
+                
+                isParsing = false;
+                parseBtn.disabled = false;
+                stopBtn.disabled = true;
+                
+                if (progressInterval) {
+                    clearInterval(progressInterval);
+                }
+                
+                addResult('Парсинг приостановлен');
+            }
+            
+            function finishParsing() {
+                isParsing = false;
+                parseBtn.disabled = false;
+                stopBtn.disabled = true;
+                downloadBtn.disabled = foundPhones.length === 0;
+            }
+            
+            function updateProgress(percent) {
+                currentProgress = percent;
+                progressFill.style.width = `${percent}%`;
+                progressText.textContent = `${Math.round(percent)}%`;
+                
+                const processed = Math.floor(totalSites * percent / 100);
+                processedText.textContent = `Обработано: ${processed}`;
+                remainingText.textContent = `Осталось: ${totalSites - processed}`;
+            }
+            
+            function addResult(text) {
+                const resultElement = document.createElement('div');
+                resultElement.className = 'result-item';
+                resultElement.textContent = text;
+                resultsContainer.appendChild(resultElement);
+                resultsContainer.scrollTop = resultsContainer.scrollHeight;
+            }
+            
+            function downloadResults() {
+                let output = 'Результаты парсинга телефонов\n\n';
+                
+                const results = resultsContainer.querySelectorAll('.result-item');
+                results.forEach(item => {
+                    if (!item.querySelector('.phone-number') && !item.querySelector('.site-url')) {
+                        output += item.textContent + '\n';
+                    } else if (item.querySelector('.phone-number')) {
+                        const domain = item.querySelector('div:first-child')?.textContent || '';
+                        const phones = Array.from(item.querySelectorAll('.phone-number')).map(p => p.textContent).join(', ');
+                        const url = item.querySelector('.site-url')?.textContent || '';
+                        
+                        output += `${domain}\n${phones}\n${url}\n\n`;
+                    }
+                });
+                
+                const blob = new Blob([output], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `phone_results_${new Date().toISOString().slice(0,10)}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            parseBtn.addEventListener('click', startParsing);
+            stopBtn.addEventListener('click', stopParsing);
+            downloadBtn.addEventListener('click', downloadResults);
+        });
+    </script>
+</body>
+</html>
