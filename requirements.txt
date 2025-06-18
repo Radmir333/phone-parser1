@@ -1,0 +1,8 @@
+flask==2.0.3
+werkzeug==2.0.3  # Явно указываем совместимую версию
+requests==2.26.0
+beautifulsoup4==4.10.0
+python-dotenv==0.19.0
+flask-httpauth==4.5.0
+flask-cors==3.0.10
+waitress==2.1.2
